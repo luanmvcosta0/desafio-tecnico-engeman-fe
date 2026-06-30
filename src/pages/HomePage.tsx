@@ -1,8 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Copy, SquarePen, ShieldMinus } from "lucide-react";
+import { Copy, Search, SquarePen, ShieldMinus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthProvider";
 import { Button } from "@/components/ui/button";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import {
   Table,
   TableHeader,
@@ -138,8 +143,17 @@ function HomePage() {
     null,
   );
   const [editOpen, setEditOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const canManage =
     auth?.user?.role === "BROKER" || auth?.user?.role === "ADMIN";
+
+  const filteredProperties = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return properties;
+    return properties.filter((property) =>
+      property.name.toLowerCase().includes(term),
+    );
+  }, [properties, search]);
 
   function fetchPage(pageToLoad: number) {
     setLoading(true);
@@ -234,6 +248,17 @@ function HomePage() {
             {canManage && <CreatePropertyDialog onCreated={handleCreated} />}
           </div>
 
+          <InputGroup className="max-w-sm">
+            <InputGroupInput
+              placeholder="Pesquisar por nome..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <InputGroupAddon>
+              <Search className="size-4" />
+            </InputGroupAddon>
+          </InputGroup>
+
           {loading && (
             <p className="text-sm text-muted-foreground">Carregando...</p>
           )}
@@ -248,10 +273,16 @@ function HomePage() {
             </p>
           )}
 
-          {!loading && !error && properties.length > 0 && (
+          {!loading && !error && properties.length > 0 && filteredProperties.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              Nenhum imóvel encontrado para "{search}".
+            </p>
+          )}
+
+          {!loading && !error && filteredProperties.length > 0 && (
             <>
               <PropertiesTable
-                properties={properties}
+                properties={filteredProperties}
                 canManage={canManage}
                 onEdit={handleEdit}
                 onToggleActive={handleToggleActive}

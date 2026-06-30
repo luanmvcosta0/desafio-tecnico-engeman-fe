@@ -1,22 +1,36 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import type { AuthContextType } from "../interfaces/AuthContextType";
 import type { User } from "../interfaces/User";
+import { loginRequest, registerRequest } from "@/services/authService";
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
-  function login(userData: User) {
-    setUser(userData);
+  async function login(email: string, password: string) {
+    const data = await loginRequest(email, password);
+    localStorage.setItem("token", data.token);
+    setUser({ username: email, email });
+  }
+
+  async function register(
+    username: string,
+    email: string,
+    password: string,
+    role?: string,
+  ) {
+    await registerRequest(username, email, password, role);
+    await login(email, password);
   }
 
   function logout() {
+    localStorage.removeItem("token");
     setUser(null);
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

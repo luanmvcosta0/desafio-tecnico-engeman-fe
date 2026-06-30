@@ -1,7 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
-import PrivateRoute from "./PrivateRoute";
 import HomePage from "../pages/HomePage";
 
 function AppRoutes() {
@@ -9,9 +8,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/cadastro" element={<RegisterPage />} />
-      <Route element={<PrivateRoute />}>
-        <Route path="/" element={<HomePage />} />
-      </Route>
+      <Route path="/home" element={<HomePage />} />
     </Routes>
   );
 }

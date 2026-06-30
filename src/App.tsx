@@ -1,8 +1,11 @@
+import AuthProvider from "./contexts/AuthProvider";
+import AppRoutes from "./routes/AppRoutes";
+
 function App() {
   return (
-    <div>
-      <h1>Desafio Engeman</h1>
-    </div>
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 }
 export default App;

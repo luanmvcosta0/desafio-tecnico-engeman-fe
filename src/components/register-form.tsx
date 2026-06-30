@@ -97,6 +97,9 @@ export function RegisterForm({
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+                <p className="text-gray-400">
+                  Deve ter pelo menos 8 caracteres
+                </p>
               </Field>
               <Field>
                 <FieldLabel htmlFor="username">Função</FieldLabel>

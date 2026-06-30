@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import type { AuthContextType } from "../interfaces/AuthContextType";
-import type { User } from "../interfaces/User";
+import type { User, UserRole } from "../interfaces/User";
 import { loginRequest, registerRequest } from "@/services/authService";
+import { decodeJwt } from "@/lib/jwt";
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -20,7 +21,8 @@ function AuthProvider({ children }: { children: ReactNode }) {
 
   async function login(email: string, password: string) {
     const data = await loginRequest(email, password);
-    const userData: User = { username: "", email };
+    const payload = decodeJwt<{ role?: UserRole }>(data.token);
+    const userData: User = { username: "", email, role: payload?.role };
     localStorage.setItem("token", data.token);
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);

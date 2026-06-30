@@ -38,10 +38,12 @@ function formatPrice(value: number) {
 
 function PropertiesTable({
   properties,
+  canManage,
   onEdit,
   onToggleActive,
 }: {
   properties: Property[];
+  canManage: boolean;
   onEdit: (property: Property) => void;
   onToggleActive: (property: Property) => void;
 }) {
@@ -75,7 +77,7 @@ function PropertiesTable({
               </button>
             </div>
           </TableHead>
-          <TableHead className="text-right">Ações</TableHead>
+          {canManage && <TableHead className="text-right">Ações</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -92,28 +94,30 @@ function PropertiesTable({
             <TableCell className="text-right font-semibold">
               {formatPrice(property.price)}
             </TableCell>
-            <TableCell className="text-right">
-              <div className="flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => onEdit(property)}
-                  aria-label="Editar imóvel"
-                  className="text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <SquarePen className="size-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onToggleActive(property)}
-                  aria-label={
-                    property.active ? "Inativar imóvel" : "Ativar imóvel"
-                  }
-                  className="text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <ShieldMinus className="size-4" />
-                </button>
-              </div>
-            </TableCell>
+            {canManage && (
+              <TableCell className="text-right">
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(property)}
+                    aria-label="Editar imóvel"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <SquarePen className="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onToggleActive(property)}
+                    aria-label={
+                      property.active ? "Inativar imóvel" : "Ativar imóvel"
+                    }
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <ShieldMinus className="size-4" />
+                  </button>
+                </div>
+              </TableCell>
+            )}
           </TableRow>
         ))}
       </TableBody>
@@ -134,6 +138,8 @@ function HomePage() {
     null,
   );
   const [editOpen, setEditOpen] = useState(false);
+  const canManage =
+    auth?.user?.role === "BROKER" || auth?.user?.role === "ADMIN";
 
   function fetchPage(pageToLoad: number) {
     setLoading(true);
@@ -225,7 +231,7 @@ function HomePage() {
                 </span>
               )}
             </div>
-            <CreatePropertyDialog onCreated={handleCreated} />
+            {canManage && <CreatePropertyDialog onCreated={handleCreated} />}
           </div>
 
           {loading && (
@@ -246,6 +252,7 @@ function HomePage() {
             <>
               <PropertiesTable
                 properties={properties}
+                canManage={canManage}
                 onEdit={handleEdit}
                 onToggleActive={handleToggleActive}
               />

@@ -29,7 +29,7 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  async function handleSubmite(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
@@ -43,6 +43,9 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 text-center select-none">
+        AcheImovel
+      </h1>
       <Card>
         <CardHeader>
           <CardTitle className="flex justify-center text-2xl">
@@ -53,7 +56,7 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmite}>
+          <form onSubmit={handleSubmit}>
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>

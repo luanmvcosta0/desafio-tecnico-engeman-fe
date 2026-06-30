@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 
-export function LoginForm({
+export function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
@@ -27,10 +27,10 @@ export function LoginForm({
       <Card>
         <CardHeader>
           <CardTitle className="flex justify-center text-2xl">
-            Faça o Login
+            Faça seu Cadastro
           </CardTitle>
           <CardDescription className="flex justify-center">
-            Entre com sua conta para ter acesso a plataforma
+            Crie sua conta para ter acesso a plataforma
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -57,14 +57,14 @@ export function LoginForm({
                 />
               </Field>
               <Field>
-                <Button type="submit">Login</Button>
+                <Button type="submit">Cadastre-se</Button>
                 <FieldDescription className="text-center">
-                  Não tem uma conta?{" "}
+                  Ja tem uma conta?{" "}
                   <button
-                    onClick={() => navigate("/cadastro")}
+                    onClick={() => navigate("/login")}
                     className="cursor-pointer underline"
                   >
-                    Cadastre-se
+                    Login
                   </button>
                 </FieldDescription>
               </Field>

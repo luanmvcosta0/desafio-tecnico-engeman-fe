@@ -1,13 +1,11 @@
+import { RegisterForm } from "@/components/register-form";
+
 function RegisterPage() {
   return (
-    <div>
-      <h1>Cadastre-se</h1>
-      <form action="">
-        <input type="text" placeholder="Digite seu nome de usuário" />
-        <input type="email" placeholder="Digite seu email" />
-        <input type="password" placeholder="Digite sua senha" />
-        <button type="submit">Cadastrar</button>
-      </form>
+    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+      <div className="w-full max-w-sm">
+        <RegisterForm />
+      </div>
     </div>
   );
 }

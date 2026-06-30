@@ -11,7 +11,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
   async function login(email: string, password: string) {
     const data = await loginRequest(email, password);
     localStorage.setItem("token", data.token);
-    setUser({ username: email, email });
+    setUser({ username: "", email });
   }
 
   async function register(

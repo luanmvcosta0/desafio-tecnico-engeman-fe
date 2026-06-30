@@ -15,7 +15,7 @@ export async function registerRequest(
   password: string,
   role?: string,
 ) {
-  const response = await api.post("auth/register", {
+  const response = await api.post("/auth/register", {
     username,
     email,
     password,

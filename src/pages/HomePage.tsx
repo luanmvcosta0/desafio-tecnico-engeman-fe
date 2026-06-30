@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Copy, Search, SquarePen, ShieldMinus } from "lucide-react";
+import { Copy, Search, SquarePen, ShieldMinus, Star } from "lucide-react";
 import { useAuth } from "@/contexts/AuthProvider";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,13 +44,19 @@ function formatPrice(value: number) {
 function PropertiesTable({
   properties,
   canManage,
+  canFavorite,
+  favorites,
   onEdit,
   onToggleActive,
+  onToggleFavorite,
 }: {
   properties: Property[];
   canManage: boolean;
+  canFavorite: boolean;
+  favorites: Set<string>;
   onEdit: (property: Property) => void;
   onToggleActive: (property: Property) => void;
+  onToggleFavorite: (property: Property) => void;
 }) {
   function handleCopy() {
     const text = properties
@@ -66,6 +72,7 @@ function PropertiesTable({
     <Table>
       <TableHeader>
         <TableRow>
+          {canFavorite && <TableHead className="w-8" />}
           <TableHead>Nome</TableHead>
           <TableHead>Tipo</TableHead>
           <TableHead>Quartos</TableHead>
@@ -91,6 +98,29 @@ function PropertiesTable({
             key={property.id}
             className={property.active ? undefined : "opacity-60"}
           >
+            {canFavorite && (
+              <TableCell>
+                <button
+                  type="button"
+                  onClick={() => onToggleFavorite(property)}
+                  aria-label={
+                    favorites.has(property.id)
+                      ? "Remover dos favoritos"
+                      : "Favoritar imóvel"
+                  }
+                  className={
+                    favorites.has(property.id)
+                      ? "text-yellow-500 transition-colors hover:text-yellow-600"
+                      : "text-muted-foreground transition-colors hover:text-foreground"
+                  }
+                >
+                  <Star
+                    className="size-4"
+                    fill={favorites.has(property.id) ? "currentColor" : "none"}
+                  />
+                </button>
+              </TableCell>
+            )}
             <TableCell className="font-medium text-primary underline-offset-4 hover:underline">
               {property.name}
             </TableCell>
@@ -146,14 +176,45 @@ function HomePage() {
   const [search, setSearch] = useState("");
   const canManage =
     auth?.user?.role === "BROKER" || auth?.user?.role === "ADMIN";
+  const canFavorite = auth?.user?.role === "CUSTOMER";
+  const favoritesKey = `favorites:${auth?.user?.email ?? "anonymous"}`;
+
+  const [favorites, setFavorites] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem(favoritesKey);
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  function handleToggleFavorite(property: Property) {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(property.id)) {
+        next.delete(property.id);
+      } else {
+        next.add(property.id);
+      }
+      localStorage.setItem(favoritesKey, JSON.stringify([...next]));
+      return next;
+    });
+  }
 
   const filteredProperties = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return properties;
-    return properties.filter((property) =>
-      property.name.toLowerCase().includes(term),
-    );
-  }, [properties, search]);
+    const filtered = term
+      ? properties.filter((property) =>
+          property.name.toLowerCase().includes(term),
+        )
+      : properties;
+    if (!canFavorite) return filtered;
+    return [...filtered].sort((a, b) => {
+      const aFav = favorites.has(a.id) ? 1 : 0;
+      const bFav = favorites.has(b.id) ? 1 : 0;
+      return bFav - aFav;
+    });
+  }, [properties, search, canFavorite, favorites]);
 
   function fetchPage(pageToLoad: number) {
     setLoading(true);
@@ -284,8 +345,11 @@ function HomePage() {
               <PropertiesTable
                 properties={filteredProperties}
                 canManage={canManage}
+                canFavorite={canFavorite}
+                favorites={favorites}
                 onEdit={handleEdit}
                 onToggleActive={handleToggleActive}
+                onToggleFavorite={handleToggleFavorite}
               />
 
               {totalPages > 1 && (

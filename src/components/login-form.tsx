@@ -14,11 +14,14 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useNavigate } from "react-router-dom";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const navigate = useNavigate();
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -56,7 +59,13 @@ export function LoginForm({
               <Field>
                 <Button type="submit">Login</Button>
                 <FieldDescription className="text-center">
-                  Não tem uma conta? <a href="#">Cadastre-se</a>
+                  Não tem uma conta?{" "}
+                  <button
+                    onClick={() => navigate("/cadastro")}
+                    className="cursor-pointer underline"
+                  >
+                    Cadastre-se
+                  </button>
                 </FieldDescription>
               </Field>
             </FieldGroup>

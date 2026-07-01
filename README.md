@@ -1,75 +1,90 @@
-# React + TypeScript + Vite
+# Desafio Técnico Engeman - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicação frontend para gestão e busca de imóveis, desenvolvida como desafio técnico da Engeman. Permite autenticação de usuários com diferentes papéis (administrador, corretor e cliente), cadastro/edição de imóveis, filtros de busca, paginação e favoritos.
 
-Currently, two official plugins are available:
+## Sumário
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- [Stack](#stack)
+- [Funcionalidades](#funcionalidades)
+- [Pré-requisitos](#pré-requisitos)
+- [Como rodar](#como-rodar)
+- [Estrutura do projeto](#estrutura-do-projeto)
+- [Rotas](#rotas)
+- [Autenticação](#autenticação)
+- [Configuração da API](#configuração-da-api)
 
-## React Compiler
+## Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **React 19** + **TypeScript**
+- **Vite** — build tool e dev server
+- **React Router 7** — roteamento (com rotas privadas)
+- **Tailwind CSS 4** — estilização
+- **Radix UI / shadcn** — componentes de UI acessíveis
+- **Axios** — cliente HTTP
+- **Lucide React** — ícones
+- **ESLint** — linting
 
-## Expanding the ESLint configuration
+## Funcionalidades
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Autenticação (login e cadastro) com token JWT
+- Controle de acesso por papel do usuário:
+  - `ADMIN` / `BROKER`: podem cadastrar, editar e ativar/inativar imóveis
+  - `CUSTOMER`: pode favoritar imóveis (favoritos salvos localmente por usuário)
+- Listagem de imóveis com paginação
+- Filtros de busca por nome, tipo, faixa de preço e número de quartos (com debounce)
+- Cópia rápida da tabela de imóveis para a área de transferência
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Pré-requisitos
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- Docker e Docker Compose
+- Uma API backend rodando em `http://localhost:8080` (endpoints `/auth/login`, `/auth/register`, `/property/...`). Clone o repositório [desafio-tecnico-engeman-be](https://github.com/luanmvcosta0/desafio-tecnico-engeman-be) e siga as instruções de execução por lá.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Como rodar
 
+```bash
+docker compose up --build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Isso constrói a imagem (Node 24 Alpine) e sobe o servidor de desenvolvimento em `http://localhost:5173`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Estrutura do projeto
 
 ```
+src/
+├── components/
+│   ├── auth/          # Formulários de login e cadastro
+│   ├── properties/    # Diálogos de criação/edição de imóveis
+│   └── ui/            # Componentes de UI genéricos (shadcn/radix)
+├── contexts/
+│   └── AuthProvider.tsx   # Contexto de autenticação (login, registro, logout)
+├── interfaces/         # Tipos TypeScript (User, Property, AuthContextType)
+├── lib/
+│   ├── jwt.ts          # Decodificação de JWT
+│   └── utils.ts
+├── pages/
+│   ├── HomePage.tsx     # Listagem/filtros/paginação de imóveis
+│   ├── LoginPage.tsx
+│   └── RegisterPage.tsx
+├── routes/
+│   ├── AppRoutes.tsx    # Definição das rotas
+│   └── PrivateRoute.tsx # Guard de rotas autenticadas
+└── services/
+    ├── authService.ts     # Chamadas HTTP de autenticação
+    └── propertyService.ts # Chamadas HTTP de imóveis
+```
+
+## Rotas
+
+| Rota        | Acesso  | Descrição                   |
+| ----------- | ------- | --------------------------- |
+| `/login`    | Público | Tela de login               |
+| `/cadastro` | Público | Tela de cadastro de usuário |
+| `/`         | Privado | Painel principal (imóveis)  |
+
+## Autenticação
+
+Após o login, o token JWT retornado pela API é armazenado em `localStorage` (`token`), junto com os dados do usuário (`user`). O papel (`role`) é extraído diretamente do payload do token e usado para controlar as permissões de UI (ex.: exibir ações de gerenciamento de imóveis). O `axios` injeta automaticamente o header `Authorization: Bearer <token>` nas requisições de imóveis.
+
+## Configuração da API
+
+A URL base da API está definida diretamente em `src/services/authService.ts` e `src/services/propertyService.ts` (`http://localhost:8080`). Ajuste esse valor caso a API esteja em outro endereço.

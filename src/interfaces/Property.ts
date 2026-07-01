@@ -16,6 +16,14 @@ export interface PropertyPayload {
   type: PropertyType;
 }
 
+export interface PropertyFilters {
+  type?: PropertyType | "";
+  minPrice?: number | "";
+  maxPrice?: number | "";
+  rooms?: number | "";
+  name?: string;
+}
+
 export interface Page<T> {
   content: T[];
   totalElements: number;

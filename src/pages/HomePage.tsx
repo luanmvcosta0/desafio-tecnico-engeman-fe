@@ -19,8 +19,8 @@ import {
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Input } from "@/components/ui/input";
 import { getProperties, toggleActive } from "@/services/propertyService";
-import { CreatePropertyDialog } from "@/components/create-property-dialog";
-import { EditPropertyDialog } from "@/components/edit-property-dialog";
+import { CreatePropertyDialog } from "@/components/properties/create-property-dialog";
+import { EditPropertyDialog } from "@/components/properties/edit-property-dialog";
 import {
   Pagination,
   PaginationContent,

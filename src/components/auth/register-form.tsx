@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
-import { NativeSelect, NativeSelectOption } from "./ui/native-select";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { useAuth } from "@/contexts/AuthProvider";
 import React, { useState } from "react";
 

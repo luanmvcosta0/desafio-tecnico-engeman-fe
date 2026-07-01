@@ -16,9 +16,11 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Input } from "@/components/ui/input";
 import { getProperties, toggleActive } from "@/services/propertyService";
-import { CreatePropertyDialog } from "@/components/create-property-dialog";
-import { EditPropertyDialog } from "@/components/edit-property-dialog";
+import { CreatePropertyDialog } from "@/components/properties/create-property-dialog";
+import { EditPropertyDialog } from "@/components/properties/edit-property-dialog";
 import {
   Pagination,
   PaginationContent,
@@ -35,7 +37,23 @@ const TYPE_LABELS: Record<PropertyType, string> = {
   BUILDING: "Prédio",
 };
 
+const TYPE_OPTIONS: { value: PropertyType; label: string }[] = [
+  { value: "HOUSE", label: "Casa" },
+  { value: "CONDOMINIUM", label: "Condomínio" },
+  { value: "BUILDING", label: "Prédio" },
+];
+
 const PAGE_SIZE = 10;
+
+const EMPTY_FILTERS = {
+  name: "",
+  type: "" as PropertyType | "",
+  minPrice: "",
+  maxPrice: "",
+  rooms: "",
+};
+
+type Filters = typeof EMPTY_FILTERS;
 
 function formatPrice(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -173,7 +191,9 @@ function HomePage() {
     null,
   );
   const [editOpen, setEditOpen] = useState(false);
-  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [debouncedFilters, setDebouncedFilters] = useState<Filters>(EMPTY_FILTERS);
+  const hasActiveFilters = Object.values(filters).some((value) => value !== "");
   const canManage =
     auth?.user?.role === "BROKER" || auth?.user?.role === "ADMIN";
   const canFavorite = auth?.user?.role === "CUSTOMER";
@@ -201,24 +221,24 @@ function HomePage() {
     });
   }
 
-  const filteredProperties = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    const filtered = term
-      ? properties.filter((property) =>
-          property.name.toLowerCase().includes(term),
-        )
-      : properties;
-    if (!canFavorite) return filtered;
-    return [...filtered].sort((a, b) => {
+  const sortedProperties = useMemo(() => {
+    if (!canFavorite) return properties;
+    return [...properties].sort((a, b) => {
       const aFav = favorites.has(a.id) ? 1 : 0;
       const bFav = favorites.has(b.id) ? 1 : 0;
       return bFav - aFav;
     });
-  }, [properties, search, canFavorite, favorites]);
+  }, [properties, canFavorite, favorites]);
 
-  function fetchPage(pageToLoad: number) {
+  function fetchPage(pageToLoad: number, filtersToApply: Filters = debouncedFilters) {
     setLoading(true);
-    return getProperties(pageToLoad, PAGE_SIZE)
+    return getProperties(pageToLoad, PAGE_SIZE, "id", {
+      type: filtersToApply.type,
+      minPrice: filtersToApply.minPrice === "" ? undefined : Number(filtersToApply.minPrice),
+      maxPrice: filtersToApply.maxPrice === "" ? undefined : Number(filtersToApply.maxPrice),
+      rooms: filtersToApply.rooms === "" ? undefined : Number(filtersToApply.rooms),
+      name: filtersToApply.name,
+    })
       .then((data) => {
         setProperties(data.content);
         setTotalElements(data.totalElements);
@@ -230,8 +250,24 @@ function HomePage() {
   }
 
   useEffect(() => {
-    fetchPage(page);
-  }, [page]);
+    const handle = setTimeout(() => setDebouncedFilters(filters), 400);
+    return () => clearTimeout(handle);
+  }, [filters]);
+
+  useEffect(() => {
+    fetchPage(page, debouncedFilters);
+  }, [page, debouncedFilters]);
+
+  function handleFilterChange(patch: Partial<Filters>) {
+    setFilters((prev) => ({ ...prev, ...patch }));
+    setPage(0);
+  }
+
+  function handleClearFilters() {
+    setFilters(EMPTY_FILTERS);
+    setDebouncedFilters(EMPTY_FILTERS);
+    setPage(0);
+  }
 
   function handleCreated() {
     if (page === 0) {
@@ -309,16 +345,93 @@ function HomePage() {
             {canManage && <CreatePropertyDialog onCreated={handleCreated} />}
           </div>
 
-          <InputGroup className="max-w-sm">
-            <InputGroupInput
-              placeholder="Pesquisar por nome..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <InputGroupAddon>
-              <Search className="size-4" />
-            </InputGroupAddon>
-          </InputGroup>
+          <div className="flex flex-wrap items-end gap-3">
+            <InputGroup className="w-full max-w-xs">
+              <InputGroupInput
+                placeholder="Pesquisar por nome..."
+                value={filters.name}
+                onChange={(e) => handleFilterChange({ name: e.target.value })}
+              />
+              <InputGroupAddon>
+                <Search className="size-4" />
+              </InputGroupAddon>
+            </InputGroup>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-muted-foreground" htmlFor="filter-type">
+                Tipo
+              </label>
+              <NativeSelect
+                id="filter-type"
+                className="w-40"
+                value={filters.type}
+                onChange={(e) =>
+                  handleFilterChange({ type: e.target.value as PropertyType | "" })
+                }
+              >
+                <NativeSelectOption value="">Todos</NativeSelectOption>
+                {TYPE_OPTIONS.map((option) => (
+                  <NativeSelectOption key={option.value} value={option.value}>
+                    {option.label}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-muted-foreground" htmlFor="filter-min-price">
+                Preço mínimo
+              </label>
+              <Input
+                id="filter-min-price"
+                type="number"
+                min={0}
+                step={0.01}
+                placeholder="0,00"
+                className="w-32"
+                value={filters.minPrice}
+                onChange={(e) => handleFilterChange({ minPrice: e.target.value })}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-muted-foreground" htmlFor="filter-max-price">
+                Preço máximo
+              </label>
+              <Input
+                id="filter-max-price"
+                type="number"
+                min={0}
+                step={0.01}
+                placeholder="0,00"
+                className="w-32"
+                value={filters.maxPrice}
+                onChange={(e) => handleFilterChange({ maxPrice: e.target.value })}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-muted-foreground" htmlFor="filter-rooms">
+                Quartos (mín.)
+              </label>
+              <Input
+                id="filter-rooms"
+                type="number"
+                min={0}
+                step={1}
+                placeholder="0"
+                className="w-24"
+                value={filters.rooms}
+                onChange={(e) => handleFilterChange({ rooms: e.target.value })}
+              />
+            </div>
+
+            {hasActiveFilters && (
+              <Button variant="outline" size="sm" onClick={handleClearFilters}>
+                Limpar filtros
+              </Button>
+            )}
+          </div>
 
           {loading && (
             <p className="text-sm text-muted-foreground">Carregando...</p>
@@ -330,20 +443,16 @@ function HomePage() {
 
           {!loading && !error && properties.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              Nenhum imóvel cadastrado.
+              {hasActiveFilters
+                ? "Nenhum imóvel encontrado para os filtros aplicados."
+                : "Nenhum imóvel cadastrado."}
             </p>
           )}
 
-          {!loading && !error && properties.length > 0 && filteredProperties.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              Nenhum imóvel encontrado para "{search}".
-            </p>
-          )}
-
-          {!loading && !error && filteredProperties.length > 0 && (
+          {!loading && !error && sortedProperties.length > 0 && (
             <>
               <PropertiesTable
-                properties={filteredProperties}
+                properties={sortedProperties}
                 canManage={canManage}
                 canFavorite={canFavorite}
                 favorites={favorites}

@@ -1,5 +1,10 @@
 import axios from "axios";
-import type { Page, Property, PropertyPayload } from "@/interfaces/Property";
+import type {
+  Page,
+  Property,
+  PropertyFilters,
+  PropertyPayload,
+} from "@/interfaces/Property";
 
 const api = axios.create({
   baseURL: "http://localhost:8080",
@@ -17,9 +22,19 @@ export async function getProperties(
   page = 0,
   size = 50,
   sortBy = "id",
+  filters: PropertyFilters = {},
 ): Promise<Page<Property>> {
   const response = await api.get<Page<Property>>("/property/", {
-    params: { page, size, sortBy },
+    params: {
+      page,
+      size,
+      sortBy,
+      type: filters.type || undefined,
+      minPrice: filters.minPrice ?? undefined,
+      maxPrice: filters.maxPrice ?? undefined,
+      rooms: filters.rooms ?? undefined,
+      name: filters.name || undefined,
+    },
   });
   return response.data;
 }
